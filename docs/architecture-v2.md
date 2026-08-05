@@ -190,16 +190,126 @@ MF - Full Migration Workflow
 
 Users can compose custom workflows from the parameterized JTs for their specific patterns.
 
-### Credential Types (v2)
+### AAP Environment Representation (Hybrid Inventory + Credentials)
 
-Replace the three v1 custom types with two cleaner types:
+Environments are represented in AAP using a **hybrid model**: a single inventory provides topology visibility and non-secret metadata, while custom credentials store sensitive connection details. This gives AAP users a browsable view of all registered environments while keeping secrets in the credential store (encrypted, RBAC-controlled, independently rotatable).
 
-| Credential Type | Fields | Injected As |
+#### Inventory Structure
+
+A single `mf2_Migration Factory` inventory with two groups:
+
+```
+mf2_Migration Factory (inventory)
+├── sources (group)
+│   ├── vcenter-prod        # host_vars: type, host URL, SDK endpoint, VDDK image
+│   └── rhv-legacy          # host_vars: type, host URL, SDK endpoint
+└── targets (group)
+    ├── ocp-prod-east       # host_vars: host URL, mtv_namespace, operators
+    └── ocp-staging         # host_vars: host URL, mtv_namespace
+```
+
+Each host is a **logical representation** of an environment (not an SSH target). All playbooks run on `localhost` with `connection: local`. The inventory hosts carry non-secret configuration that playbooks resolve via `hostvars[source_name]` and `hostvars[target_name]`.
+
+**Inventory hosts created by `aap_seed`:**
+
+```yaml
+# Source environment host
+- name: vcenter-prod
+  inventory: mf2_Migration Factory
+  groups: [sources]
+  variables:
+    mf_env_type: vmware
+    mf_env_host: vcenter.prod.example.com
+    mf_sdk_endpoint: /sdk
+    mf_mtv_namespace: openshift-mtv
+    mf_vddk_image: registry.example.com/vddk:8.0
+    mf_insecure_skip_tls_verify: false
+
+# Target cluster host
+- name: ocp-prod-east
+  inventory: mf2_Migration Factory
+  groups: [targets]
+  variables:
+    mf_env_host: https://api.ocp-prod-east.example.com:6443
+    mf_mtv_namespace: openshift-mtv
+    mf_default_target_namespace: vm-workloads
+    mf_operators: [mtv, cnv, nmstate]
+```
+
+#### Credential Types (v2)
+
+Replace the three v1 custom types with two cleaner types. Credentials store **secrets only** — non-secret metadata lives on inventory hosts.
+
+| Credential Type | Fields (all secret) | Injected As |
 |---|---|---|
-| `Migration Factory - Source Environment` | type, host, sdk_endpoint, username, password, certificate, vddk_image | Extra vars (`mf_source_*`) |
-| `Migration Factory - Target Cluster` | host, api_key, mtv_namespace, default_target_namespace | Extra vars (`mf_target_*`) + env vars (`K8S_AUTH_*`) |
+| `Migration Factory - Source Environment` | username, password, certificate | Extra vars (`mf_source_username`, `mf_source_password`, `mf_source_certificate`) |
+| `Migration Factory - Target Cluster` | api_key | Extra vars (`mf_target_api_key`) + env var (`K8S_AUTH_API_KEY`) |
 
-The v1 `openshift_virtualization_migration_cac` type (which bundled AAP config + migration targets into one credential) is eliminated. AAP connection details are handled natively by AAP (machine credentials), and environment details are handled by the two types above.
+**Credentials created by `aap_seed`:**
+
+```yaml
+# Source credentials (secrets only)
+- name: mf2_source_vcenter-prod
+  organization: Migration Factory
+  credential_type: Migration Factory - Source Environment
+  inputs:
+    username: svc-migration@vsphere.local
+    password: "{{ vault_vcenter_prod_password }}"
+    certificate: "{{ vault_vcenter_prod_cert }}"
+
+# Target credentials (secrets only)
+- name: mf2_target_ocp-prod-east
+  organization: Migration Factory
+  credential_type: Migration Factory - Target Cluster
+  inputs:
+    api_key: "{{ vault_ocp_east_token }}"
+```
+
+#### Naming Convention
+
+All v2 AAP resources use the `mf2_` prefix for coexistence with v1:
+
+| Resource Type | Naming Pattern | Example |
+|---|---|---|
+| Inventory | `mf2_Migration Factory` | — |
+| Source credential | `mf2_source_<name>` | `mf2_source_vcenter-prod` |
+| Target credential | `mf2_target_<name>` | `mf2_target_ocp-prod-east` |
+| Job template | `mf2_<action>` | `mf2_Migrate` |
+| Workflow | `mf2_<workflow>` | `mf2_Full Migration Workflow` |
+| Credential type | `Migration Factory - <type>` | `Migration Factory - Source Environment` |
+
+#### Credential-to-Host Resolution in Playbooks
+
+When a user launches a job template via survey (e.g., `source_name: vcenter-prod`, `target_name: ocp-prod-east`), playbooks resolve environment details from both inventory hosts and credential injection:
+
+```yaml
+# migrate.yml (conceptual)
+- hosts: localhost
+  connection: local
+  vars:
+    # Non-secret metadata from inventory host vars
+    _source: "{{ hostvars[source_name] }}"
+    _target: "{{ hostvars[target_name] }}"
+    # Secrets from credential injection (automatic via AAP)
+    # mf_source_username, mf_source_password, mf_source_certificate
+    # mf_target_api_key (also injected as K8S_AUTH_API_KEY env var)
+  roles:
+    - mtv_migrate
+```
+
+#### Why This Model
+
+| Concern | How it's addressed |
+|---|---|
+| **Topology visibility** | AAP inventory UI shows all registered sources and targets |
+| **Secret management** | Passwords/tokens live in AAP credential store, never in inventory vars |
+| **Credential rotation** | Updating a credential doesn't require re-seeding inventory or JTs |
+| **RBAC** | AAP teams can be granted access to specific credentials per environment |
+| **Adding environments** | Run `environment_manager` to add inventory host + credential — no JT changes |
+| **Survey usability** | Users provide environment names that map to inventory hosts (discoverable in AAP UI) |
+| **v1 coexistence** | `mf2_` prefix prevents resource conflicts with v1 content |
+
+The v1 `openshift_virtualization_migration_cac` type (which bundled AAP config + migration targets into one credential) is eliminated. AAP connection details are handled natively by AAP (machine credentials), and environment details are split cleanly between inventory metadata and credential secrets.
 
 ---
 
@@ -264,12 +374,14 @@ aap_seed_create_workflows: true
 **Task flow:**
 
 1. Build credential type definitions (2 custom types)
-2. Build credentials from `aap_seed_environments` (one per source + one per target)
-3. Build fixed JT list with survey specs
-4. Build workflow template
-5. Dispatch via `infra.aap_configuration.dispatch`
+2. Build inventory with `sources` and `targets` groups from `aap_seed_environments`
+3. Build inventory hosts with non-secret metadata (one per source + one per target)
+4. Build credentials with secrets only (one per source + one per target)
+5. Build fixed JT list with survey specs (JTs attach credentials by naming convention)
+6. Build workflow template
+7. Dispatch via `infra.aap_configuration.dispatch`
 
-**The `environments` data drives credential creation**, but JTs are static templates — no loops over hosts x targets.
+**The `environments` data drives inventory host and credential creation**, but JTs are static templates — no loops over hosts x targets.
 
 ### `environment_manager` (NEW)
 
