@@ -1,0 +1,59 @@
+---
+# defaults file for infra.openshift_virtualization_migration.utility_openshift_target_credential
+
+# title: OpenShift Host
+# required: True
+# description: OpenShift host.
+utility_openshift_target_credential_openshift_host: "{{ openshift_host }}"
+
+# title: OpenShift API Key
+# required: True
+# description: OpenShift API key.
+utility_openshift_target_credential_openshift_api_key: >-
+  {{
+    openshift_credential.openshift_api_key
+    | default(openshift_credential.openshift_temporary_api_key)
+    if openshift_credential is defined
+    else openshift_api_key | default(openshift_temporary_api_key)
+  }}
+
+# title: OpenShift CA Certificate Path
+# required: False
+# description: Path to the OpenShift CA Certificate.
+utility_openshift_target_credential_openshift_ca_cert_path: "{{ openshift_ca_cert_path | default(omit) }}"
+
+# title: OpenShift Verify SSL
+# required: False
+# description: Whether to verify SSL certificates.
+utility_openshift_target_credential_openshift_verify_ssl: "{{ openshift_verify_ssl | default(true) }}"
+
+# title: Name applied to the OpenShift target credential resource
+# required: False
+# description: Name applied to the OpenShift target credential resource.
+utility_openshift_target_credential_resource_name: "migration-factory-aap-credential"
+
+# title: Namespace applied to the OpenShift target credential resource
+# required: False
+# description: Namespace applied to the OpenShift target credential resource.
+utility_openshift_target_credential_resource_namespace: "openshift-config"
+
+# title: Cluster Role applied to the generated OpenShift Service Account
+# required: False
+# description: Cluster Role applied to the generated OpenShift Service Account.
+utility_openshift_target_credential_cluster_role: "cluster-admin"
+
+# title: Managed By Label
+# required: False
+# description: Value of the app.kubernetes.io/managed-by label applied to resources.
+utility_openshift_target_credential_managed_by_label: "ansible"
+
+# title: Secure Logging
+# required: False
+# description: Whether to enable secure logging.
+utility_openshift_target_credential_secure_logging: "{{ secure_logging | default(true) }}"
+
+# title: Display Credential
+# required: False
+# description: Whether to display the credential.
+utility_openshift_target_credential_display_credential: false
+...

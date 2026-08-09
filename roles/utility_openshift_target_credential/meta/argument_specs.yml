@@ -1,0 +1,55 @@
+---
+# argument spec file for infra.openshift_virtualization_migration.utility_openshift_target_credential
+
+argument_specs:
+  main:
+    short_description: Creates a long lived Service Account token in OpenShift for use by Ansible Automation Platform.
+    options:
+      utility_openshift_target_credential_openshift_host:
+        type: str
+        description: OpenShift host.
+        required: true
+      utility_openshift_target_credential_openshift_api_key:
+        type: str
+        description: OpenShift API key.
+        required: true
+      utility_openshift_target_credential_openshift_ca_cert_path:
+        type: str
+        description: Path to the OpenShift CA Certificate.
+        required: false
+      utility_openshift_target_credential_openshift_verify_ssl:
+        type: bool
+        description: Whether to verify SSL certificates.
+        required: false
+        default: true
+      utility_openshift_target_credential_resource_name:
+        type: str
+        description: Name applied to the OpenShift target credential resource.
+        required: false
+        default: "migration-factory-aap-credential"
+      utility_openshift_target_credential_resource_namespace:
+        type: str
+        description: Namespace applied to the OpenShift target credential resource.
+        required: false
+        default: "openshift-config"
+      utility_openshift_target_credential_cluster_role:
+        type: str
+        description: Cluster Role applied to the generated OpenShift Service Account.
+        required: false
+        default: "cluster-admin"
+      utility_openshift_target_credential_managed_by_label:
+        type: str
+        description: Value of the app.kubernetes.io/managed-by label applied to resources.
+        required: false
+        default: "ansible"
+      utility_openshift_target_credential_secure_logging:
+        type: bool
+        description: Whether to enable secure logging.
+        required: false
+        default: true
+      utility_openshift_target_credential_display_credential:
+        type: bool
+        description: Whether to display the credential.
+        required: false
+        default: false
+...

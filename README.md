@@ -42,27 +42,7 @@ See [CHANGELOG.md](CHANGELOG.md) for release history and changes.
 This collection includes the following roles for managing OpenShift Virtualization migrations:
 
 <!--ROLES_LIST_START-->
-* [aap_cleanup](roles/aap_cleanup/README.md) - Remove AAP resources seeded by the aap_seed role
-* [aap_deploy](roles/aap_deploy/README.md) - Deploys an instance of Ansible Automation Platform.
-* [aap_machine_credentials](roles/aap_machine_credentials/README.md) - Management of Machine Credentials.
-* [aap_seed](roles/aap_seed/README.md) - Populates an Ansible Automation Platform instance.
-* [bootstrap](roles/bootstrap/README.md) - Initialization of the Ansible for OpenShift Virtualization Migration environment.
-* [cluster_healthcheck](roles/cluster_healthcheck/README.md) - Cluster health validation for OpenShift Virtualization migration environments.
-* [create_mf_aap_token](roles/create_mf_aap_token/README.md) - create_mf_aap_token
-* [mtv_management](roles/mtv_management/README.md) - Management of the Migration Toolkit for Virtualization (MTV).
-* [mtv_migrate](roles/mtv_migrate/README.md) - Migration of Virtual Machines from Source to Destination.
-* [network_mgmt](roles/network_mgmt/README.md) - Management of network related components.
-* [ocp_cleanup](roles/ocp_cleanup/README.md) - Remove OpenShift migration artifacts created during virtualization migration testing
-* [operator_management](roles/operator_management/README.md) - Management of OpenShift Operators.
-* [validate_migration](roles/validate_migration/README.md) - Verification of an Ansible for OpenShift Virtualization Migration environment.
-* [vm_backup_restore](roles/vm_backup_restore/README.md) - Virtual Machine backup and restore capabilities.
-* [vm_collect](roles/vm_collect/README.md) - Collection of Migration Toolkit for Virtualization inventory information.
-* [vm_hot_plug](roles/vm_hot_plug/README.md) - Hot Plug Virtual Machine resources.
-* [vm_lifecycle](roles/vm_lifecycle/README.md) - Management of the lifecycle activities of Virtual Machines.
-* [vm_mac_address](roles/vm_mac_address/README.md) - Management of Virtual Machine MAC Addresses.
-* [vm_networking](roles/vm_networking/README.md) - Management of Virtual Machine networking.
-* [vm_patching](roles/vm_patching/README.md) - Patching related activities for Virtual Machines.
-* [vm_ssh](roles/vm_ssh/README.md) - Management of SSH keys for Virtual Machines in OpenShift.
+* [utility_openshift_target_credential](roles/utility_openshift_target_credential/README.md) - A utility role to manage OpenShift target cluster credentials for migration
 <!--ROLES_LIST_END-->
 
 ## Requirements
