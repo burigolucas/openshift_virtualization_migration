@@ -1,0 +1,66 @@
+---
+- name: Seed AAP with Migration Factory content
+  vars:
+    aap_hostname: "{{ aap_seed_hostname }}" # noqa: var-naming[no-role-prefix]
+    aap_username: "{{ aap_seed_username | default(omit) }}" # noqa: var-naming[no-role-prefix]
+    aap_password: "{{ aap_seed_password | default(omit) }}" # noqa: var-naming[no-role-prefix]
+    aap_token: "{{ aap_seed_token | default(omit) }}" # noqa: var-naming[no-role-prefix]
+    aap_validate_certs: "{{ aap_seed_validate_certs }}" # noqa: var-naming[no-role-prefix]
+  block:
+    # -- Build phase -----------------------------------------------------------
+    - name: Build simple AAP objects from defaults
+      ansible.builtin.include_tasks: build_objects.yml
+
+    - name: Validate inventory host variables
+      ansible.builtin.include_tasks: validate.yml
+
+    - name: Build credentials from inventory
+      ansible.builtin.include_tasks: build_credentials.yml
+
+    - name: Build hosts and groups from inventory
+      ansible.builtin.include_tasks: build_hosts.yml
+      when: aap_seed_hosts_create | bool
+
+    # -- Sync phase ------------------------------------------------------------
+    - name: Create project and sync from SCM
+      when: aap_seed_projects_create | bool
+      block:
+        - name: Sync SCM project
+          ansible.builtin.include_tasks: sync_project.yml
+      rescue:
+        - name: Project sync failed
+          ansible.builtin.fail:
+            msg: >-
+              Failed to sync project from SCM. Verify that the Git URL
+              ({{ aap_seed_project_scm_url }}) and branch
+              ({{ aap_seed_project_scm_branch }}) are correct and
+              accessible from the AAP server.
+
+    # -- Handoff ---------------------------------------------------------------
+    - name: Copy aap_seed_controller_* to controller_* for dispatch # noqa: var-naming[no-role-prefix]
+      ansible.builtin.set_fact:
+        aap_organizations: >-
+          {{ aap_seed_controller_organizations | default([]) }}
+        controller_credential_types: >-
+          {{ aap_seed_controller_credential_types | default([]) }}
+        controller_credentials: >-
+          {{ aap_seed_controller_credentials | default([]) }}
+        controller_inventories: >-
+          {{ aap_seed_controller_inventories | default([]) }}
+        controller_hosts: >-
+          {{ aap_seed_controller_hosts | default([]) }}
+        controller_groups: >-
+          {{ aap_seed_controller_groups | default([]) }}
+        controller_execution_environments: >-
+          {{ aap_seed_controller_execution_environments | default([]) }}
+        controller_projects: >-
+          {{ [] if (aap_seed_projects_create | bool)
+             else aap_seed_controller_projects | default([]) }}
+        controller_templates: >-
+          {{ aap_seed_controller_templates | default([]) }}
+
+    # -- Dispatch --------------------------------------------------------------
+    - name: Push CaC content to AAP
+      ansible.builtin.include_role:
+        name: infra.aap_configuration.dispatch
+...

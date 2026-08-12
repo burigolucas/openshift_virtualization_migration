@@ -1,0 +1,11 @@
+---
+- name: Seed AAP with Migration Factory content
+  hosts: migration_aap
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: Sync project and push CaC objects to AAP
+      ansible.builtin.import_role:
+        name: aap_seed
+...

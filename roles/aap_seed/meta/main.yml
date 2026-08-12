@@ -1,0 +1,11 @@
+---
+galaxy_info:
+  role_name: aap_seed
+  author: Red Hat
+  description: Seed AAP with Migration Factory Configuration as Code content
+  company: Red Hat
+  license: GPL-3.0-or-later
+  min_ansible_version: "2.16"
+
+dependencies: []
+...
