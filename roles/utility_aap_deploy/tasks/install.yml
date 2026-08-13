@@ -1,0 +1,81 @@
+---
+
+- name: install | Validate OpenShift cluster connection
+  no_log: "{{ utility_aap_deploy_secure_logging }}"
+  ansible.builtin.uri:
+    url: "{{ utility_aap_deploy_openshift_host }}/version"
+    method: GET
+    validate_certs: "{{ utility_aap_deploy_openshift_verify_ssl }}"
+    ca_cert: "{{ utility_aap_deploy_openshift_ca_cert_path | default(omit) }}"
+    headers:
+      Authorization: Bearer {{ utility_aap_deploy_openshift_api_key }}
+
+- name: install | Call aap_ocp_install role
+  ansible.builtin.import_role:
+    name: infra.aap_utilities.aap_ocp_install
+  vars:
+    aap_ocp_install_connection:
+      host: "{{ utility_aap_deploy_openshift_host }}"
+      api_key: "{{ utility_aap_deploy_openshift_api_key }}"
+      validate_certs: "{{ utility_aap_deploy_openshift_verify_ssl }}"
+    aap_ocp_install_namespace: "{{ utility_aap_deploy_aap_namespace }}"
+    aap_ocp_install_operator: "{{ utility_aap_deploy_aap_ocp_install_operator |
+      default(__utility_aap_deploy_aap_ocp_install_operator, true) }}"
+    aap_ocp_install_lightspeed: "{{ utility_aap_deploy_aap_ocp_install_lightspeed |
+      default(__utility_aap_deploy_aap_ocp_install_lightspeed, true) }}"
+    aap_ocp_install_controller: "{{ utility_aap_deploy_aap_ocp_install_controller |
+      default(__utility_aap_deploy_aap_ocp_install_controller, true) }}"
+    aap_ocp_install_platform: "{{ utility_aap_deploy_aap_ocp_install_platform |
+      default(__utility_aap_deploy_aap_ocp_install_platform, true) }}"
+    aap_ocp_install_hub: "{{ utility_aap_deploy_aap_ocp_install_hub |
+      default(__utility_aap_deploy_aap_ocp_install_hub, true) }}"
+    aap_ocp_install_eda: "{{ utility_aap_deploy_aap_ocp_install_eda |
+      default(__utility_aap_deploy_aap_ocp_install_eda, true) }}"
+
+- name: install | Verify AAP Components are running
+  when: component | default("", true) | length > 0
+  kubernetes.core.k8s_info:
+    api_version: apps/v1
+    host: "{{ utility_aap_deploy_openshift_host }}"
+    api_key: "{{ utility_aap_deploy_openshift_api_key }}"
+    validate_certs: "{{ utility_aap_deploy_openshift_verify_ssl }}"
+    ca_cert: "{{ utility_aap_deploy_openshift_ca_cert_path | default(omit) }}"
+    namespace: "{{ utility_aap_deploy_aap_namespace }}"
+    kind: Deployment
+    name: "{{ component }}"
+  loop_control:
+    loop_var: component
+  loop: "{{ __utility_aap_deploy_aap_validate_components }}"
+  register: __utility_aap_deploy_verify_aap_component_result
+  until:
+    - "'resources' in __utility_aap_deploy_verify_aap_component_result"
+    - __utility_aap_deploy_verify_aap_component_result.resources[0] is defined
+    - "'status' in __utility_aap_deploy_verify_aap_component_result.resources[0]"
+    - "'readyReplicas' in __utility_aap_deploy_verify_aap_component_result.resources[0].status"
+    - __utility_aap_deploy_verify_aap_component_result.resources[0].status.readyReplicas | int >= 1
+  retries: 100
+  delay: 10
+
+- name: install | Retrieve Migration Factory AAP admin credential for non-bootstrap mode
+  no_log: "{{ utility_aap_deploy_secure_logging }}"
+  kubernetes.core.k8s_info:
+    host: "{{ utility_aap_deploy_openshift_host }}"
+    api_key: "{{ utility_aap_deploy_openshift_api_key }}"
+    validate_certs: "{{ utility_aap_deploy_openshift_verify_ssl }}"
+    ca_cert: "{{ utility_aap_deploy_openshift_ca_cert_path | default(omit) }}"
+    api_version: v1
+    kind: Secret
+    name: "{{ utility_aap_deploy_aap_instance_name }}-{{ utility_aap_deploy_aap_admin_username }}-password"
+    namespace: "{{ utility_aap_deploy_aap_namespace }}"
+  register: __utility_aap_deploy_aap_admin_credential
+
+- name: install | Set AAP username fact
+  no_log: "{{ utility_aap_deploy_secure_logging }}"
+  ansible.builtin.set_fact:
+    __utility_aap_deploy_aap_hostname: "{{ aap_ocp_install_platform_route | ansible.builtin.urlsplit('hostname') }}"
+    __utility_aap_deploy_aap_username: "{{ utility_aap_deploy_aap_admin_username }}"
+    __utility_aap_deploy_aap_password: >-
+      {{ __utility_aap_deploy_aap_admin_credential.resources[0].data.password | b64decode }}
+    __utility_aap_deploy_aap_validate_certs: "{{ utility_aap_deploy_aap_validate_certs }}"
+
+...

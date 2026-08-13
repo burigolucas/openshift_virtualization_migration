@@ -42,6 +42,8 @@ See [CHANGELOG.md](CHANGELOG.md) for release history and changes.
 This collection includes the following roles for managing OpenShift Virtualization migrations:
 
 <!--ROLES_LIST_START-->
+* [aap_seed](roles/aap_seed/README.md) - Seed AAP with Migration Factory Configuration as Code content
+* [utility_aap_deploy](roles/utility_aap_deploy/README.md) - Deploys an instance of Ansible Automation Platform.
 * [utility_openshift_target_credential](roles/utility_openshift_target_credential/README.md) - A utility role to manage OpenShift target cluster credentials for migration
 <!--ROLES_LIST_END-->
 

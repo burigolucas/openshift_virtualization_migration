@@ -1,0 +1,23 @@
+---
+# vars file for infra.openshift_virtualization_migration.utility_aap_deploy
+__utility_aap_deploy_aap_ocp_install_platform:
+  namespace: "{{ utility_aap_deploy_aap_namespace }}"
+  instance_name: "{{ utility_aap_deploy_aap_instance_name }}"
+  component_deployment: unified
+__utility_aap_deploy_aap_ocp_install_controller:
+  install: true
+  admin_user: "{{ utility_aap_deploy_aap_admin_username }}"
+__utility_aap_deploy_aap_ocp_install_lightspeed:
+  install: false
+__utility_aap_deploy_aap_ocp_install_operator:
+  channel: "{{ utility_aap_deploy_aap_channel }}"
+__utility_aap_deploy_aap_ocp_install_hub:
+  install: false
+__utility_aap_deploy_aap_ocp_install_eda:
+  install: false
+
+__utility_aap_deploy_aap_validate_components:
+  - "{{ utility_aap_deploy_aap_instance_name + '-controller-web' }}"
+  - "{{ utility_aap_deploy_aap_instance_name + '-controller-task' }}"
+  - "{{ utility_aap_deploy_aap_instance_name + '-gateway' }}"
+...

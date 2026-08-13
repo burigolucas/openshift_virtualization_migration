@@ -1,0 +1,160 @@
+---
+argument_specs:
+  main:
+    short_description: Deploys an instance of Ansible Automation Platform.
+    options:
+      utility_aap_deploy_openshift_host:
+        type: str
+        required: true
+        description: OpenShift host.
+
+      utility_aap_deploy_openshift_api_key:
+        type: str
+        required: true
+        description: OpenShift API key.
+
+      utility_aap_deploy_openshift_ca_cert_path:
+        type: str
+        required: false
+        description: Path to the OpenShift CA Certificate.
+
+      utility_aap_deploy_openshift_verify_ssl:
+        type: bool
+        required: false
+        default: true
+        description: Whether to verify SSL certificates.
+
+      utility_aap_deploy_secure_logging:
+        type: bool
+        required: false
+        default: true
+        description: Whether to enable secure logging.
+
+      utility_aap_deploy_aap_channel:
+        type: str
+        required: false
+        default: "stable-2.6"
+        description: AAP Operator channel.
+
+      utility_aap_deploy_aap_instance_name:
+        type: str
+        required: false
+        default: "aap"
+        description: AAP instance name.
+
+      utility_aap_deploy_aap_namespace:
+        type: str
+        required: false
+        default: "virtualization-migration"
+        description: Namespace for the AAP instance.
+
+      utility_aap_deploy_aap_admin_username:
+        type: str
+        required: false
+        default: "admin"
+        description: AAP admin username.
+
+      utility_aap_deploy_subscribe_aap:
+        type: bool
+        required: false
+        default: true
+        description: Whether to subscribe to AAP.
+
+      utility_aap_deploy_aap_ocp_install_controller:
+        type: dict
+        required: false
+        description: AAP Controller Configuration.
+
+      utility_aap_deploy_aap_ocp_install_operator:
+        type: dict
+        required: false
+        description: AAP Operator Configuration.
+
+      utility_aap_deploy_aap_ocp_install_lightspeed:
+        type: dict
+        required: false
+        description: AAP Lightspeed Configuration.
+
+      utility_aap_deploy_aap_ocp_install_platform:
+        type: dict
+        required: false
+        description: AAP Platform Configuration.
+
+      utility_aap_deploy_aap_ocp_install_hub:
+        type: dict
+        required: false
+        description: AAP Hub Configuration.
+
+      utility_aap_deploy_aap_ocp_install_eda:
+        type: dict
+        required: false
+        description: AAP EDA Configuration.
+
+      utility_aap_deploy_rh_username:
+        type: str
+        required: false
+        description: Red Hat username.
+
+      utility_aap_deploy_rh_password:
+        type: str
+        required: false
+        description: Red Hat password.
+
+      utility_aap_deploy_rh_client_id:
+        type: str
+        required: false
+        description: Red Hat client ID.
+
+      utility_aap_deploy_rh_client_secret:
+        type: str
+        required: false
+        description: Red Hat client secret.
+
+      utility_aap_deploy_aap_validate_certs:
+        type: bool
+        required: false
+        default: true
+        description: Whether to verify SSL certificates for AAP.
+
+      utility_aap_deploy_rh_subscription_id:
+        type: str
+        required: false
+        default: ""
+        description: Red Hat subscription ID.
+
+      utility_aap_deploy_rh_filter_product_name:
+        type: str
+        required: false
+        default: "Red Hat Ansible Automation Platform"
+        description: Red Hat subscription product name.
+
+      utility_aap_deploy_rh_filter_support_level:
+        type: str
+        required: false
+        default: "Self-Support"
+        description: Red Hat subscription support level.
+
+      utility_aap_deploy_aap_setup_inst_verbosity:
+        type: int
+        required: false
+        default: 1
+        description: Level from 0 - 5 for verbosity.
+
+      utility_aap_deploy_aap_license_manifest:
+        type: str
+        required: false
+        default: ""
+        description: Location of the AAP license manifest file.
+
+      utility_aap_deploy_license_file_submission_retries:
+        type: int
+        required: false
+        default: 25
+        description: Number of retries to submit the license file.
+
+      utility_aap_deploy_license_file_submission_delay:
+        type: int
+        required: false
+        default: 10
+        description: Amount of time to wait between retries to submit the license file.
+...

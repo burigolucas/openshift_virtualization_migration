@@ -1,0 +1,152 @@
+---
+# defaults file for infra.openshift_virtualization_migration.utility_aap_deploy
+
+# title: OpenShift Host
+# required: True
+# description: OpenShift host.
+utility_aap_deploy_openshift_host: "{{ openshift_host }}"
+
+# title: OpenShift API Key
+# required: True
+# description: OpenShift API key.
+utility_aap_deploy_openshift_api_key: >-
+  {{
+    openshift_credential.openshift_api_key
+    | default(openshift_credential.openshift_temporary_api_key)
+    if openshift_credential is defined
+    else openshift_api_key | default(openshift_temporary_api_key)
+  }}
+
+# title: OpenShift CA Certificate Path
+# required: False
+# description: Path to the OpenShift CA Certificate.
+utility_aap_deploy_openshift_ca_cert_path: "{{ openshift_ca_cert_path | default(omit) }}"
+
+# title: OpenShift Verify SSL
+# required: False
+# description: Whether to verify SSL certificates.
+utility_aap_deploy_openshift_verify_ssl: "{{ openshift_verify_ssl | default(true) }}"
+
+# title: Secure Logging
+# required: False
+# description: Whether to enable secure logging.
+utility_aap_deploy_secure_logging: "{{ secure_logging | default(true) }}"
+
+# title: AAP Operator Channel
+# required: False
+# description: AAP Operator channel.
+## Note: Will be updating to 'stable-2.7' when issues with aap_ocp_install is resolved
+utility_aap_deploy_aap_channel: "{{ aap_channel | default('stable-2.6') }}"
+
+# title: AAP Instance Name
+# required: False
+# description: AAP instance name.
+utility_aap_deploy_aap_instance_name: "aap"
+
+# title: AAP Namespace
+# required: False
+# description: Namespace for the AAP instance.
+utility_aap_deploy_aap_namespace: virtualization-migration
+
+# title: AAP Admin Username
+# required: False
+# description: AAP admin username.
+utility_aap_deploy_aap_admin_username: admin
+
+# title: Subscribe AAP
+# required: False
+# description: Whether to subscribe to AAP.
+utility_aap_deploy_subscribe_aap: true
+
+# title: AAP Controller Configuration
+# required: False
+# description: AAP Controller Configuration.
+utility_aap_deploy_aap_ocp_install_controller:
+
+# title: AAP Operator Configuration
+# required: False
+# description: AAP Operator Configuration.
+utility_aap_deploy_aap_ocp_install_operator:
+
+# title: AAP Lightspeed Configuration
+# required: False
+# description: AAP Lightspeed Configuration.
+utility_aap_deploy_aap_ocp_install_lightspeed:
+
+# title: AAP Platform Configuration
+# required: False
+# description: AAP Platform Configuration.
+utility_aap_deploy_aap_ocp_install_platform:
+
+# title: AAP Hub Configuration
+# required: False
+# description: AAP Hub Configuration.
+utility_aap_deploy_aap_ocp_install_hub:
+
+# title: AAP EDA Configuration
+# required: False
+# description: AAP EDA Configuration.
+utility_aap_deploy_aap_ocp_install_eda:
+
+# title: Red Hat Username
+# required: False
+# description: RH Username.
+utility_aap_deploy_rh_username: "{{ rh_username | default('', True) }}"
+
+# title: Red Hat Password
+# required: False
+# description: Red Hat Password.
+utility_aap_deploy_rh_password: "{{ rh_password | default('', True) }}"
+
+# title: Red Hat Client ID
+# required: False
+# description: Red Hat Client ID.
+utility_aap_deploy_rh_client_id: "{{ rh_client_id | default('', True) }}"
+
+# title: Red Hat Client Secret
+# required: False
+# description: Red Hat Client Secret.
+utility_aap_deploy_rh_client_secret: "{{ rh_client_secret | default(omit, True) }}"
+
+# title: AAP Verify SSL
+# required: False
+# description: Whether to verify SSL certificates.
+utility_aap_deploy_aap_validate_certs: "{{ aap_validate_certs | default(true) }}"
+
+# title: Red Hat subscription ID
+# required: true
+# description: Red Hat subscription ID.
+utility_aap_deploy_rh_subscription_id: ""
+
+# title: Red Hat subscription product name
+# required: false
+# description: Red Hat subscription product name.
+utility_aap_deploy_rh_filter_product_name: Red Hat Ansible Automation Platform
+
+# title: Red Hat subscription support level
+# required: false
+# description: Red Hat subscription support level.
+utility_aap_deploy_rh_filter_support_level: Self-Support
+
+# title: Level from 0 - 5 for verbosity
+# required: false
+# description: Level from 0 - 5 for verbosity
+utility_aap_deploy_aap_setup_inst_verbosity: 1
+
+# title: Location of the AAP license manifest file
+# required: false
+# description: Location of the AAP license manifest file
+utility_aap_deploy_aap_license_manifest: ""
+
+# title: License File Submission Retries
+# required: True
+# description_lines:
+# Number of retries to submit the license file
+utility_aap_deploy_license_file_submission_retries: 25
+
+# title: License File Submission Delay
+# required: True
+# description_lines:
+# Amount of time to wait between retries to submit the license file
+utility_aap_deploy_license_file_submission_delay: 10
+...

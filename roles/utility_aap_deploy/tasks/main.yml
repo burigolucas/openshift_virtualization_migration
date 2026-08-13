@@ -1,0 +1,28 @@
+---
+# tasks file for infra.openshift_virtualization_migration.utility_aap_deploy
+
+- name: Verify Red Hat credentials or license manifest are provided for subscription
+  ansible.builtin.assert:
+    that:
+      - >-
+        (utility_aap_deploy_rh_username | default('', true) | length > 0 and
+         utility_aap_deploy_rh_password | default('', true) | length > 0) or
+        (utility_aap_deploy_rh_client_id | default('', true) | length > 0 and
+         utility_aap_deploy_rh_client_secret | default('', true) | length > 0) or
+        (utility_aap_deploy_aap_license_manifest | default('', true) | trim | length > 0)
+    fail_msg: >-
+      Red Hat credentials or a license manifest are required for AAP subscription.
+      Provide either utility_aap_deploy_rh_username and utility_aap_deploy_rh_password,
+      utility_aap_deploy_rh_client_id and utility_aap_deploy_rh_client_secret,
+      or utility_aap_deploy_aap_license_manifest.
+    quiet: true
+
+- name: Install AAP
+  ansible.builtin.include_tasks:
+    file: install.yml
+
+- name: Subscribe AAP
+  when: utility_aap_deploy_subscribe_aap | bool
+  ansible.builtin.include_tasks:
+    file: subscribe.yml
+...
