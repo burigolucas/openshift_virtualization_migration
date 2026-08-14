@@ -1,0 +1,100 @@
+---
+
+- name: subscribe | Get subscriptions with a filter
+  when:
+    - utility_aap_deploy_aap_license_manifest | default('', true) | trim | length == 0
+  block:
+    - name: subscribe | Query Subscription
+      no_log: "{{ utility_aap_deploy_secure_logging }}"
+      ansible.controller.subscriptions:
+        client_id: "{{ utility_aap_deploy_rh_client_id | default(omit, true) }}"
+        client_secret: "{{ utility_aap_deploy_rh_client_secret | default(omit, true) }}"
+        username: >-
+          {{ utility_aap_deploy_rh_username
+          if utility_aap_deploy_rh_client_id | default('', true) | trim | length == 0
+          or utility_aap_deploy_rh_client_secret | default('', true) | trim | length == 0
+          else omit }}
+        password: >-
+          {{ utility_aap_deploy_rh_password
+          if utility_aap_deploy_rh_client_id | default('', true) | trim | length == 0
+          or utility_aap_deploy_rh_client_secret | default('', true) | trim | length == 0
+          else omit }}
+        filters:
+          product_name: "{{ utility_aap_deploy_rh_filter_product_name }}"
+          support_level: "{{ utility_aap_deploy_rh_filter_support_level }}"
+        controller_host: "{{ __utility_aap_deploy_aap_hostname }}"
+        controller_username: "{{ __utility_aap_deploy_aap_username }}"
+        controller_password: "{{ __utility_aap_deploy_aap_password }}"
+        validate_certs: "{{ __utility_aap_deploy_aap_validate_certs }}"
+      register: __utility_aap_deploy_aap_subscriptions
+      retries: 10
+      delay: 5
+      until: __utility_aap_deploy_aap_subscriptions is not failed
+
+    - name: subscribe | Set subscription ID based on utility_aap_deploy_aap_subscriptions
+      ansible.builtin.set_fact:
+        __utility_aap_deploy_aap_subscriptions_rh_subscription_id: >-
+          {% set query = "[?subscription_id == '" + utility_aap_deploy_rh_subscription_id + "']" %}
+          {{
+            (__utility_aap_deploy_aap_subscriptions.subscriptions | json_query(query) | first).subscription_id
+            if utility_aap_deploy_rh_subscription_id | default('', true) | trim | length > 0
+            else
+            (__utility_aap_deploy_aap_subscriptions.subscriptions | first).subscription_id
+          }}
+
+    - name: subscribe | Attach to a subscription
+      no_log: "{{ utility_aap_deploy_secure_logging }}"
+      ansible.controller.license:
+        subscription_id: "{{ __utility_aap_deploy_aap_subscriptions_rh_subscription_id | default(omit, true) }}"
+        manifest: "{{ utility_aap_deploy_aap_license_manifest | default(omit, true) }}"
+        controller_host: "{{ __utility_aap_deploy_aap_hostname }}"
+        controller_username: "{{ __utility_aap_deploy_aap_username }}"
+        controller_password: "{{ __utility_aap_deploy_aap_password }}"
+        validate_certs: "{{ __utility_aap_deploy_aap_validate_certs }}"
+      register: __utility_aap_deploy_aap_attach_subscription
+      retries: 10
+      delay: 5
+      until: __utility_aap_deploy_aap_attach_subscription is not failed
+
+- name: subscribe | Verify License Manifest Exists
+  when:
+    - utility_aap_deploy_aap_license_manifest | default('', true) | trim | length > 0
+  block:
+    - name: subscribe | Check if license file exists
+      ansible.builtin.stat:
+        path: "{{ utility_aap_deploy_aap_license_manifest }}"
+      register: __utility_aap_deploy_aap_license_manifest_stat
+
+    - name: subscribe | Verify license file exists
+      ansible.builtin.assert:
+        that:
+          - __utility_aap_deploy_aap_license_manifest_stat.stat.exists
+        quiet: true
+        fail_msg: "AAP Manifest File at '{{ utility_aap_deploy_aap_license_manifest }}' Does Not Exist"
+
+    - name: subscribe | Read the License file
+      ansible.builtin.slurp:
+        src: "{{ utility_aap_deploy_aap_license_manifest }}"
+      register: __utility_aap_deploy_aap_license_manifest_content
+
+    - name: subscribe | Apply license to AAP
+      no_log: "{{ utility_aap_deploy_secure_logging }}"
+      ansible.builtin.uri:
+        method: POST
+        status_code: 200
+        url: "https://{{ __utility_aap_deploy_aap_hostname }}/api/controller/v2/config/"
+        user: "{{ __utility_aap_deploy_aap_username }}"
+        password: "{{ __utility_aap_deploy_aap_password }}"
+        force_basic_auth: true
+        validate_certs: "{{ __utility_aap_deploy_aap_validate_certs }}"
+        body_format: json
+        headers:
+          Content-Type: application/json
+        body:
+          manifest: "{{ __utility_aap_deploy_aap_license_manifest_content.content }}"
+      register: __utility_aap_deploy_aap_license_submission_response
+      retries: "{{ utility_aap_deploy_license_file_submission_retries }}"
+      until: __utility_aap_deploy_aap_license_submission_response.status == 200
+      delay: "{{ utility_aap_deploy_license_file_submission_delay }}"
+
+...

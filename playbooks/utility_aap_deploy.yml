@@ -1,0 +1,11 @@
+---
+
+- name: Deploy an Ansible Automation Platform credential to the target OpenShift cluster
+  hosts: "{{ utility_clusters | default('migration_clusters') }}"
+  gather_facts: false
+  connection: local
+  tasks:
+    - name: Invoke utility_aap_deploy role
+      ansible.builtin.include_role:
+        name: utility_aap_deploy
+...
