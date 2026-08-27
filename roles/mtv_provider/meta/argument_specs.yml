@@ -1,0 +1,106 @@
+---
+argument_specs:
+  main:
+    short_description: >-
+      Create MTV/Forklift source provider CRs on OpenShift target clusters
+    description:
+      - >-
+        Creates a Forklift Provider custom resource and its backing Secret
+        on a target OpenShift cluster for a given source environment.
+      - >-
+        Designed to run from AAP with credential injection. The source
+        credential injects mf_source_username, mf_source_password, and
+        mf_source_certificate as extra vars. OpenShift connection is
+        provided by the AAP OpenShift credential which sets K8S_AUTH_*
+        environment variables.
+      - >-
+        For targets with multiple sources, launch the job template once
+        per source-target pair.
+    options:
+      source_name:
+        type: str
+        required: true
+        description: >-
+          Name of the source environment (must match an AAP inventory host
+          in the vm_sources group).
+
+      target_name:
+        type: str
+        required: true
+        description: >-
+          Name of the target OpenShift cluster (must match an AAP inventory
+          host in the migration_clusters group).
+
+      mtv_provider_secure_logging:
+        type: bool
+        required: false
+        default: true
+        description: >-
+          Whether to enable secure logging for sensitive tasks.
+
+      mtv_provider_provider_namespace:
+        type: str
+        required: false
+        default: openshift-mtv
+        description: >-
+          Namespace where the provider will be created.
+          Resolved from the target host's mtv_namespace variable by default.
+
+      mtv_provider_provider_wait:
+        type: bool
+        required: false
+        default: true
+        description: >-
+          Whether to wait for the Provider CR to reach Ready status after
+          creation.
+
+      mtv_provider_provider_wait_timeout:
+        type: int
+        required: false
+        default: 120
+        description: >-
+          Seconds to wait for the Provider to become Ready before failing.
+
+      mtv_provider_provider_wait_poll:
+        type: int
+        required: false
+        default: 10
+        description: >-
+          Seconds between status polls while waiting for Ready.
+
+      mtv_provider_provider_state:
+        type: str
+        required: false
+        default: present
+        choices:
+          - present
+          - absent
+        description: >-
+          Desired state of the provider. Set to absent to remove a
+          previously created provider and its secret.
+
+      mtv_provider_api_version:
+        type: str
+        required: false
+        default: forklift.konveyor.io/v1beta1
+        description: >-
+          Forklift API version for Provider CRs.
+
+      mtv_provider_provider_override:
+        type: dict
+        required: false
+        default: {}
+        description: >-
+          Override configuration merged into the Provider CR spec.
+          Allows setting additional properties such as settings or
+          other fields that evolve with the Forklift API.
+
+      mtv_provider_auto_retrieve_cert:
+        type: bool
+        required: false
+        default: true
+        description: >-
+          Whether to automatically retrieve the source TLS certificate
+          when insecureSkipTlsVerify is false and no certificate is
+          provided.
+...
