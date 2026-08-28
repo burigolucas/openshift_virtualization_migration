@@ -34,7 +34,6 @@ skip_list:
   - fqcn[canonical]
 
 enable_list:
-  - args
   - empty-string-compare
   - no-log-password
   - no-same-owner
