@@ -72,7 +72,9 @@ jobs:
           fi
 
           # Build the Slack message text safely
-          MSG="*${TITLE}*\n${BODY}\n*Repo:* \`${REPO_NAME}\`\n*Branch:* \`${PR_HEAD_REF}\` -> \`${PR_BASE_REF}\`\n<${PR_URL}|View Pull Request>"
+          # Use $'...' quoting so \n is interpreted as a real newline by bash,
+          # which jq then encodes as the JSON \n that Slack renders as a line break.
+          MSG=$"*${TITLE}*"$'\n'"${BODY}"$'\n'"*Repo:* \`${REPO_NAME}\`"$'\n'"*Branch:* \`${PR_HEAD_REF}\` -> \`${PR_BASE_REF}\`"$'\n'"<${PR_URL}|View Pull Request>"
 
           # Use JSON-safe encoding via jq to prevent injection
           {
