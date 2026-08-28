@@ -16,3 +16,8 @@
 > Example: `feat: add role`
 
 - [ ] I have formatted my PR title correctly.
+
+## CI Checks
+
+> Tier 1 checks (ansible-lint, pre-commit, PR title, gitleaks) run automatically on all PRs.
+> Full CI (Tier 2) requires maintainer approval for PRs from forks — see [CONTRIBUTING.md](../CONTRIBUTING.md#ci-architecture) for details.

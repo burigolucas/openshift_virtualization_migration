@@ -24,13 +24,26 @@ Click the link below to launch your IDE hosted in the Developer Sandbox:
 
 ## Pull Request Guidelines
 
-### External Contributors
+### CI Architecture
 
-All pull requests from forks require manual approval from a maintainer before CI runs. This is a security measure to protect against malicious code execution. A maintainer will review and approve your PR, after which automated tests will run.
+This project uses a two-tier CI system designed to balance immediate feedback with security requirements:
 
-### Internal Contributors
+**Tier 1 — Instant Checks (no approval required)**
 
-Pull requests from branches within the main repository run CI automatically.
+These checks run automatically on all PRs, including those from forks:
+
+- **Ansible Lint** — Runs ansible-lint in tolerant mode with public dependencies only. Catches naming conventions, YAML formatting, FQCN usage, task structure, and more.
+- **Pre-commit Checks** — YAML linting, markdown linting, secret scanning (gitleaks), documentation validation, trailing whitespace, and merge conflict detection.
+- **PR Title Validation** — Ensures PR titles follow Conventional Commits format.
+- **Gitleaks** — Scans for accidentally committed secrets.
+
+**Tier 2 — Full CI (maintainer approval required for fork PRs)**
+
+Full CI includes collection build with all dependencies, ansible-lint with full argument validation, sanity tests, and integration tests. This tier requires `AUTOMATION_HUB_TOKEN` to install private Red Hat Certified and Validated collection dependencies (`redhat.openshift_virtualization`, `redhat.openshift`, `ansible.controller`, etc.) which are not available on public Ansible Galaxy.
+
+For fork PRs, a maintainer must approve the run via the `external-ci` GitHub Environment before Tier 2 checks execute. This is a GitHub Actions security constraint — secrets are not available to `pull_request` events from forks, so `pull_request_target` with an approval gate is required to safely provide secrets.
+
+Internal PRs (from branches within the main repository) run both tiers automatically without approval.
 
 ### PR Checklist
 

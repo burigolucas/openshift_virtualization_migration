@@ -43,6 +43,10 @@ on:
     types: [opened, synchronize, reopened]
     branches: ["main", "v2"]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read  # Only read access needed for checkout and validation
 
