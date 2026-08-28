@@ -79,7 +79,7 @@ jobs:
       - name: Build and install collection
         run: |
           ansible-galaxy collection build --force
-          ansible-galaxy collection install infra-openshift_virtualization_migration-*.tar.gz --force
+          ansible-galaxy collection install infra-openshift_virtualization_migration-*.tar.gz --force --no-deps
           rm -f infra-openshift_virtualization_migration-*.tar.gz
 
       - name: Run ansible-lint (tolerant mode)
