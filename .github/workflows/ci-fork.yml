@@ -51,6 +51,7 @@ jobs:
     with:
       ref: ${{ github.sha }}
       repo: ${{ github.repository }}
+      image: "ghcr.io/burigolucas/openshift_virtualization_migration_ci/ci-python-env:latest"
       trigger_release: false
       auto_merge: false
       publish_to_automation_hub: false
