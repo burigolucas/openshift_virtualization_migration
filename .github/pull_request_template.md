@@ -20,4 +20,5 @@
 ## CI Checks
 
 > Tier 1 checks (ansible-lint, pre-commit, PR title, gitleaks) run automatically on all PRs.
-> Full CI (Tier 2) requires maintainer approval for PRs from forks — see [CONTRIBUTING.md](../CONTRIBUTING.md#ci-architecture) for details.
+> Full CI (Tier 2) requires maintainer approval for PRs from forks.
+> To run full CI before opening this PR, configure `AUTOMATION_HUB_TOKEN` in your fork's secrets — see [Running Full CI in Your Fork](../CONTRIBUTING.md#running-full-ci-in-your-fork).

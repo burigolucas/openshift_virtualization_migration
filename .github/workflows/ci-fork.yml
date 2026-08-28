@@ -1,0 +1,60 @@
+name: Fork CI
+
+# ============================================================================
+# WORKFLOW: FULL CI FOR FORK CONTRIBUTORS
+# ============================================================================
+#
+# Enables contributors to run the full CI test suite in their own forks
+# before creating a PR to upstream. Requires AUTOMATION_HUB_TOKEN configured
+# in the fork's repository secrets.
+#
+# HOW IT WORKS:
+# -------------
+# 1. Triggers on push to any feature branch (excludes main/v2)
+# 2. Only runs in fork repositories (skips silently in upstream)
+# 3. Calls the same reusable CI workflow used by the upstream CI
+# 4. Uses the fork's own AUTOMATION_HUB_TOKEN secret
+# 5. Disables release and publishing operations
+#
+# SETUP (for contributors):
+# -------------------------
+# 1. Enable GitHub Actions in your fork (Actions tab > enable workflows)
+# 2. Add AUTOMATION_HUB_TOKEN to your fork's repository secrets
+#    (Settings > Secrets and variables > Actions > New repository secret)
+# 3. Push to any feature branch — this workflow runs automatically
+#
+# See CONTRIBUTING.md for detailed setup instructions.
+#
+# ============================================================================
+
+on:
+  push:
+    branches-ignore:
+      - main
+      - v2
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    if: github.repository != 'redhat-cop/openshift_virtualization_migration'
+    uses: redhat-cop/openshift_virtualization_migration_ci/.github/workflows/ci-ansible-collection.yml@v2
+    permissions:
+      contents: write
+      packages: write
+      security-events: write
+      actions: read
+      pull-requests: write
+    with:
+      ref: ${{ github.sha }}
+      repo: ${{ github.repository }}
+      trigger_release: false
+      auto_merge: false
+      publish_to_automation_hub: false
+    secrets:
+      automation_hub_token: ${{ secrets.AUTOMATION_HUB_TOKEN }}
+      release_app_id: ${{ secrets.RELEASE_APP_ID }}
+      release_app_private_key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
