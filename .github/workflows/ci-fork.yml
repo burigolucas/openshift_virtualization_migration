@@ -44,6 +44,7 @@ jobs:
     if: github.repository != 'redhat-cop/openshift_virtualization_migration'
     permissions:
       contents: write
+      workflows: write
     steps:
       - uses: actions/checkout@v4
         with:
