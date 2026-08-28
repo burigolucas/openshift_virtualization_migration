@@ -345,7 +345,27 @@ Forks have Actions disabled by default. In your fork on GitHub:
 4. Value: paste the token from Step 2
 5. Click **Add secret**
 
-**Step 4: Push and verify**
+**Step 4: Sync upstream tags to your fork**
+
+The CI's changelog-lint job requires release tags to be present in your fork for version resolution. Tags are not synced automatically — neither when you fork the repository nor when upstream creates new releases. You need to sync tags:
+
+- **Initially**, when setting up your fork for the first time
+- **Again**, whenever a new upstream release is cut (tags falling behind causes changelog-lint to compute the wrong next version)
+
+Run the following from your local machine. Add the remote only on first run; subsequent syncs skip that line:
+
+```bash
+# First time only
+git remote add upstream https://github.com/redhat-cop/openshift_virtualization_migration.git
+
+# Every sync (initial and after each upstream release)
+git fetch upstream --tags
+git push origin --tags
+```
+
+> **Why this can't be automated in CI:** GitHub's `GITHUB_TOKEN` lacks the `workflow` OAuth scope required to push refs that reference commits containing workflow files. Running these commands locally uses your own git credentials, which have full scope.
+
+**Step 5: Push and verify**
 
 Push to any feature branch (not `main` or `v2`). The **Fork CI** workflow starts automatically. Results appear in the **Actions** tab of your fork.
 

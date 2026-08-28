@@ -21,7 +21,17 @@ name: Fork CI
 # 1. Enable GitHub Actions in your fork (Actions tab > enable workflows)
 # 2. Add AUTOMATION_HUB_TOKEN to your fork's repository secrets
 #    (Settings > Secrets and variables > Actions > New repository secret)
-# 3. Push to any feature branch — this workflow runs automatically
+# 3. Push upstream tags to your fork (required for changelog-lint, and must
+#    be repeated after each upstream release):
+#    git remote add upstream https://github.com/redhat-cop/openshift_virtualization_migration.git  # first time only
+#    git fetch upstream --tags
+#    git push origin --tags
+# 4. Push to any feature branch — this workflow runs automatically
+#
+# NOTE: Tags cannot be synced automatically in CI because GitHub's GITHUB_TOKEN
+# lacks the 'workflow' OAuth scope required to push refs that reference commits
+# containing workflow files. The one-time manual push (step 3) uses your own
+# git credentials, which have full scope.
 #
 # See CONTRIBUTING.md for detailed setup instructions.
 #
@@ -39,25 +49,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  sync-tags:
-    runs-on: ubuntu-latest
-    if: github.repository != 'redhat-cop/openshift_virtualization_migration'
-    permissions:
-      contents: write
-      workflows: write
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Sync tags from upstream for changelog-lint version resolution
-        run: |
-          git remote add upstream https://github.com/redhat-cop/openshift_virtualization_migration.git
-          git fetch upstream --tags
-          git push origin --tags --force
-
   ci:
-    needs: sync-tags
     if: github.repository != 'redhat-cop/openshift_virtualization_migration'
     uses: redhat-cop/openshift_virtualization_migration_ci/.github/workflows/ci-ansible-collection.yml@v2
     permissions:
