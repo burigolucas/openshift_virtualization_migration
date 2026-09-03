@@ -52,35 +52,66 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Fetch the latest semver tag name from upstream (public repo — no auth needed)
-          LATEST_TAG=$(gh api repos/redhat-cop/openshift_virtualization_migration/tags \
-            --jq '[.[] | select(.name | test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))] | .[0].name')
+          # Fetch the latest semver tag name and its exact commit SHA from upstream
+          TAGS_JSON=$(gh api repos/redhat-cop/openshift_virtualization_migration/tags)
+          LATEST_TAG=$(echo "$TAGS_JSON" | \
+            jq -r '[.[] | select(.name | test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))] | .[0].name')
+          UPSTREAM_SHA=$(echo "$TAGS_JSON" | \
+            jq -r '[.[] | select(.name | test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))] | .[0].commit.sha')
 
           if [[ -z "$LATEST_TAG" || "$LATEST_TAG" == "null" ]]; then
             echo "::warning::Could not determine the latest upstream tag. Changelog-lint may fail."
             exit 0
           fi
 
-          echo "Latest upstream release: ${LATEST_TAG}"
+          echo "Latest upstream release: ${LATEST_TAG} (${UPSTREAM_SHA})"
 
-          # Point the tag at the fork's default branch HEAD.
-          # The default branch HEAD has the same workflow files as the branch itself,
-          # so GITHUB_TOKEN (which lacks the 'workflow' OAuth scope) can create this
-          # tag without being rejected — unlike tags pointing to upstream release
-          # commits, which may reference older/different workflow file versions.
           DEFAULT_BRANCH="${{ github.event.repository.default_branch }}"
           MAIN_SHA=$(gh api "repos/${{ github.repository }}/commits/${DEFAULT_BRANCH}" \
             --jq '.sha')
 
+          # Verify the fork's default branch is at or ahead of the upstream release commit.
+          # 'ahead' or 'identical' means the fork includes the release — the tag will be correct.
+          # 'behind' or 'diverged' means the fork is stale: fail with a clear actionable error
+          # rather than silently creating a tag that points to the wrong base commit, which
+          # would cause semantic-release to treat upstream changes as unreleased.
+          COMPARE_STATUS=$(gh api \
+            "repos/${{ github.repository }}/compare/${UPSTREAM_SHA}...${MAIN_SHA}" \
+            --jq '.status' 2>/dev/null || echo "error")
+
+          if [[ "$COMPARE_STATUS" == "behind" || "$COMPARE_STATUS" == "diverged" ]]; then
+            echo "::error::Your fork's '${DEFAULT_BRANCH}' branch is behind the upstream ${LATEST_TAG} release."
+            echo "::error::Sync your default branch before running CI to ensure the version tag points"
+            echo "::error::to the correct base commit and semantic-release computes versions accurately:"
+            echo "::error::  git fetch upstream && git push origin ${DEFAULT_BRANCH}"
+            exit 1
+          fi
+
+          if [[ "$COMPARE_STATUS" == "error" ]]; then
+            echo "::warning::Could not verify fork sync status against upstream ${LATEST_TAG} — proceeding anyway."
+          else
+            echo "Fork's ${DEFAULT_BRANCH} includes upstream ${LATEST_TAG} ✓ (compare: ${COMPARE_STATUS})"
+          fi
+
+          # Point the tag at the fork's default branch HEAD rather than directly at
+          # UPSTREAM_SHA. GITHUB_TOKEN lacks the 'workflow' OAuth scope required to
+          # create tags referencing upstream release commits, which contain older
+          # workflow file versions. Since we verified above that MAIN_SHA is at or
+          # ahead of UPSTREAM_SHA, this is semantically equivalent for semantic-release:
+          # all contributor commits on the feature branch are correctly identified as
+          # unreleased since ${LATEST_TAG}.
           echo "Tagging ${LATEST_TAG} → ${MAIN_SHA} (fork's ${DEFAULT_BRANCH} HEAD)"
 
-          # Create the tag; silently skip if it already exists (HTTP 422)
           if gh api --method POST "repos/${{ github.repository }}/git/refs" \
               -f "ref=refs/tags/${LATEST_TAG}" \
               -f "sha=${MAIN_SHA}" 2>/dev/null; then
-            echo "Tag ${LATEST_TAG} created successfully in fork"
+            echo "Tag ${LATEST_TAG} created successfully"
           else
-            echo "Tag ${LATEST_TAG} already exists in fork (skipping)"
+            gh api --method PATCH "repos/${{ github.repository }}/git/refs/tags/${LATEST_TAG}" \
+              -f "sha=${MAIN_SHA}" \
+              -F "force=true" 2>/dev/null \
+              && echo "Tag ${LATEST_TAG} updated to current ${DEFAULT_BRANCH} HEAD" \
+              || echo "::warning::Could not update tag ${LATEST_TAG}"
           fi
 
   ci:
