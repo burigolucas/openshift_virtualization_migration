@@ -55,9 +55,17 @@ task_name_prefix: "{stem} | "
 # - Own collection modules and roles: offline: true skips the auto-install-from-source
 #   step that ansible-compat normally performs, so FQCN resolution falls back
 #   to whatever is already installed — which may be stale or absent locally.
-mock_modules: []
+mock_modules:
+  - ansible.controller.license
+  - ansible.controller.subscriptions
+  - redhat.openshift.k8s
+  - redhat.openshift.openshift_auth
+  - redhat.openshift_virtualization.kubevirt_vm
 
 mock_roles:
+  - infra.aap_utilities.aap_setup_download
+  - infra.aap_utilities.aap_setup_install
+  - infra.aap_utilities.aap_setup_prepare
   # following mocks are required due to ansible.builtin.import_role in playbooks
   - infra.openshift_virtualization_migration.aap_cleanup
   - infra.openshift_virtualization_migration.aap_deploy
